@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestión Escolar</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Sistema escolar</p>
+        <h1>Gestión de alumnos, materias y años escolares</h1>
+        <p class="hero-text">
+          Registra años escolares, materias, clases y alumnos. Toda la información
+          se guarda automáticamente en el navegador usando localStorage.
+        </p>
+      </div>
+      <button id="resetDataButton" class="secondary-button" type="button">
+        Reiniciar datos demo
+      </button>
+    </header>
+
+    <main class="layout">
+      <section class="panel forms-panel">
+        <h2>Registros</h2>
+
+        <div class="form-card">
+          <h3>Año escolar</h3>
+          <form id="schoolYearForm" class="stack-form">
+            <label>
+              Nombre del año escolar
+              <input
+                id="schoolYearName"
+                name="schoolYearName"
+                type="text"
+                placeholder="Ejemplo: 2026 - Primer ciclo"
+                required
+              />
+            </label>
+            <button type="submit">Guardar año escolar</button>
+          </form>
+        </div>
+
+        <div class="form-card">
+          <h3>Materia</h3>
+          <form id="subjectForm" class="stack-form">
+            <label>
+              Nombre de la materia
+              <input
+                id="subjectName"
+                name="subjectName"
+                type="text"
+                placeholder="Ejemplo: Matemáticas"
+                required
+              />
+            </label>
+            <button type="submit">Guardar materia</button>
+          </form>
+        </div>
+
+        <div class="form-card">
+          <h3>Clase</h3>
+          <form id="classForm" class="stack-form">
+            <label>
+              Nombre de la clase
+              <input
+                id="className"
+                name="className"
+                type="text"
+                placeholder="Ejemplo: 5°A - Mañana"
+                required
+              />
+            </label>
+
+            <label>
+              Año escolar
+              <select id="classSchoolYear" name="classSchoolYear" required></select>
+            </label>
+
+            <label>
+              Materias que recibe la clase
+              <select
+                id="classSubjects"
+                name="classSubjects"
+                multiple
+                size="5"
+                required
+              ></select>
+              <small>Usa Ctrl/Cmd + clic para seleccionar varias materias.</small>
+            </label>
+
+            <button type="submit">Guardar clase</button>
+          </form>
+        </div>
+
+        <div class="form-card">
+          <h3>Alumno</h3>
+          <form id="studentForm" class="stack-form">
+            <label>
+              Nombre del alumno
+              <input
+                id="studentName"
+                name="studentName"
+                type="text"
+                placeholder="Ejemplo: Ana Martínez"
+                required
+              />
+            </label>
+
+            <label>
+              Año escolar del alumno
+              <select id="studentSchoolYear" name="studentSchoolYear" required></select>
+            </label>
+
+            <label>
+              Clase que recibe
+              <select id="studentClass" name="studentClass" required></select>
+            </label>
+
+            <button type="submit">Guardar alumno</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="panel dashboard-panel">
+        <div class="panel-header">
+          <div>
+            <h2>Página principal</h2>
+            <p>
+              Aquí ves todos los alumnos registrados, su año escolar y la clase que
+              están recibiendo.
+            </p>
+          </div>
+          <div class="summary-grid">
+            <article>
+              <strong id="schoolYearCount">0</strong>
+              <span>Años escolares</span>
+            </article>
+            <article>
+              <strong id="subjectCount">0</strong>
+              <span>Materias</span>
+            </article>
+            <article>
+              <strong id="classCount">0</strong>
+              <span>Clases</span>
+            </article>
+            <article>
+              <strong id="studentCount">0</strong>
+              <span>Alumnos</span>
+            </article>
+          </div>
+        </div>
+
+        <div id="notification" class="notification" aria-live="polite"></div>
+
+        <section class="table-card">
+          <h3>Alumnos del sistema</h3>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Alumno</th>
+                  <th>Año escolar</th>
+                  <th>Clase</th>
+                  <th>Materias de la clase</th>
+                </tr>
+              </thead>
+              <tbody id="studentsTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="catalog-grid">
+          <article class="table-card">
+            <h3>Años escolares</h3>
+            <ul id="schoolYearsList" class="list"></ul>
+          </article>
+          <article class="table-card">
+            <h3>Materias</h3>
+            <ul id="subjectsList" class="list"></ul>
+          </article>
+          <article class="table-card">
+            <h3>Clases</h3>
+            <ul id="classesList" class="list"></ul>
+          </article>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
