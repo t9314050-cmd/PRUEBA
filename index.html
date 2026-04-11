@@ -3,70 +3,816 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Registro Escolar</title>
-    <link rel="stylesheet" href="styles.css" />
+    <title>Generador de Horarios Universitarios Inteligente</title>
+    <style>
+      :root {
+        --bg: #f4f6fb;
+        --panel: #ffffff;
+        --line: #d8deeb;
+        --primary: #2d60dd;
+        --primary-soft: #e8efff;
+        --text: #1f2a44;
+        --muted: #667085;
+        --danger: #b42318;
+        --success: #067647;
+        --warning: #b54708;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      header {
+        background: linear-gradient(120deg, #1f4bb8, #3269ea);
+        color: #fff;
+        padding: 20px 16px;
+      }
+      header h1 { margin: 0 0 6px; font-size: 1.5rem; }
+      header p { margin: 0; opacity: 0.9; }
+      main {
+        max-width: 1400px;
+        margin: 16px auto;
+        padding: 0 12px 24px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 12px;
+      }
+      section {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px;
+      }
+      section.full { grid-column: 1 / -1; }
+      h2 { margin: 0 0 8px; font-size: 1.05rem; }
+      h3 { margin: 12px 0 8px; font-size: 0.95rem; }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 8px;
+      }
+      label {
+        display: grid;
+        gap: 4px;
+        color: var(--muted);
+        font-size: 0.86rem;
+      }
+      input, select, textarea, button {
+        font: inherit;
+        padding: 8px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      textarea { min-height: 70px; resize: vertical; }
+      button {
+        background: var(--primary);
+        color: #fff;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+      }
+      button.secondary { background: #344054; }
+      button.danger { background: var(--danger); }
+      button.ghost {
+        background: #fff;
+        color: var(--text);
+        border: 1px solid var(--line);
+      }
+      .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        font-size: 0.78rem;
+        padding: 2px 8px;
+        margin-right: 6px;
+        background: #fff;
+      }
+      .list {
+        margin: 8px 0 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 6px;
+      }
+      .item {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px;
+        background: #fff;
+      }
+      .muted { color: var(--muted); }
+      .status {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px;
+        background: #fff;
+        font-size: 0.92rem;
+      }
+      .status.ok { border-color: #84e1bc; background: #ecfdf3; color: var(--success); }
+      .status.warn { border-color: #fedf89; background: #fffaeb; color: var(--warning); }
+      .status.error { border-color: #fecdca; background: #fef3f2; color: var(--danger); }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.86rem;
+      }
+      th, td {
+        border: 1px solid var(--line);
+        padding: 6px;
+        vertical-align: top;
+      }
+      th { background: var(--primary-soft); text-align: left; }
+      td .cell {
+        background: #f8f9fc;
+        border: 1px solid #e2e7f4;
+        border-radius: 6px;
+        padding: 4px;
+        margin-bottom: 4px;
+      }
+      .small { font-size: 0.8rem; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+      .manual-editor {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 8px;
+      }
+    </style>
   </head>
   <body>
     <header>
-      <h1>📚 Registro Escolar</h1>
-      <p>Gestiona años escolares, materias y alumnos con almacenamiento local.</p>
+      <h1>Generador de Horarios Universitarios Inteligente</h1>
+      <p>Planificación automática de clases con validación de restricciones y persistencia local.</p>
     </header>
 
     <main>
-      <section class="card">
-        <h2>Registrar año escolar</h2>
-        <form id="year-form" class="grid-form">
-          <label>
-            Nombre del año
-            <input id="year-name" type="text" placeholder="Ej: 2026" required />
+      <section>
+        <h2>Configuración académica</h2>
+        <div class="grid">
+          <label>Coordinación
+            <input id="coordName" placeholder="Ej: Ciencias e Ingeniería" />
           </label>
-          <button type="submit">Guardar año</button>
-        </form>
-        <ul id="year-list" class="list"></ul>
+          <label>Código coordinación
+            <input id="coordCode" placeholder="Ej: CI" />
+          </label>
+          <label>Carrera
+            <input id="careerName" placeholder="Ej: Ingeniería de Sistemas" />
+          </label>
+          <label>Código carrera
+            <input id="careerCode" placeholder="Ej: SIS" />
+          </label>
+          <label>Periodo
+            <input id="periodName" placeholder="Ej: 2026-I" />
+          </label>
+        </div>
+        <div class="actions">
+          <button id="addAcademicBtn">Agregar configuración</button>
+        </div>
+        <ul id="academicList" class="list"></ul>
       </section>
 
-      <section class="card">
-        <h2>Registrar materia</h2>
-        <form id="subject-form" class="grid-form">
-          <label>
-            Nombre de la materia
-            <input id="subject-name" type="text" placeholder="Ej: Matemática" required />
+      <section>
+        <h2>Configuración de turnos</h2>
+        <div class="grid">
+          <label>Nombre turno
+            <input id="shiftName" value="Diurno" />
           </label>
-          <label>
-            Año escolar
-            <select id="subject-year" required></select>
+          <label>Días (coma)
+            <input id="shiftDays" value="Lunes,Martes,Miércoles,Jueves,Viernes" />
           </label>
-          <button type="submit">Guardar materia</button>
-        </form>
-        <ul id="subject-list" class="list"></ul>
+          <label>Inicio jornada
+            <input id="shiftStart" type="time" value="07:00" />
+          </label>
+          <label>Fin jornada
+            <input id="shiftEnd" type="time" value="13:45" />
+          </label>
+          <label>Duración bloque (min)
+            <input id="blockDuration" type="number" value="45" min="30" />
+          </label>
+          <label>Receso (bloques, coma)
+            <input id="breakBlocks" placeholder="Ej: 3" value="3" />
+          </label>
+          <label>Almuerzo (bloques, coma)
+            <input id="lunchBlocks" placeholder="Ej: 6" value="6" />
+          </label>
+          <label>Máx clases por día
+            <input id="maxPerDay" type="number" value="4" min="1" />
+          </label>
+        </div>
+        <div class="actions">
+          <button id="saveShiftBtn">Guardar turno</button>
+        </div>
+        <ul id="shiftList" class="list"></ul>
       </section>
 
-      <section class="card">
-        <h2>Registrar alumno</h2>
-        <form id="student-form" class="grid-form">
-          <label>
-            Nombre completo
-            <input id="student-name" type="text" placeholder="Ej: Ana Pérez" required />
+      <section>
+        <h2>Gestión de recursos</h2>
+        <h3>Docentes</h3>
+        <div class="grid">
+          <label>Nombre docente
+            <input id="teacherName" placeholder="Ej: Dra. Ana Díaz" />
           </label>
-          <label>
-            Año escolar
-            <select id="student-year" required></select>
+          <label>Áreas (coma)
+            <input id="teacherAreas" placeholder="Ej: Programación,Matemática" />
           </label>
-          <button type="submit">Guardar alumno</button>
-        </form>
-        <ul id="student-list" class="list"></ul>
+        </div>
+        <div class="actions"><button id="addTeacherBtn">Agregar docente</button></div>
+        <ul id="teacherList" class="list"></ul>
+
+        <h3>Aulas</h3>
+        <div class="grid">
+          <label>Nombre aula
+            <input id="roomName" placeholder="Ej: A-101" />
+          </label>
+          <label>Tipo
+            <select id="roomType">
+              <option value="aula">Aula</option>
+              <option value="laboratorio">Laboratorio</option>
+              <option value="taller">Taller</option>
+            </select>
+          </label>
+          <label>Capacidad
+            <input id="roomCapacity" type="number" value="40" min="1" />
+          </label>
+        </div>
+        <div class="actions"><button id="addRoomBtn">Agregar aula</button></div>
+        <ul id="roomList" class="list"></ul>
       </section>
 
-      <section class="card full-width">
-        <h2>Página principal: alumnos y materias que reciben</h2>
-        <div id="dashboard"></div>
+      <section>
+        <h2>Matrícula por carrera y año (1-5)</h2>
+        <div class="grid">
+          <label>Carrera
+            <select id="enrollCareer"></select>
+          </label>
+          <label>Año
+            <select id="enrollYear">
+              <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+            </select>
+          </label>
+          <label>Total estudiantes
+            <input id="enrollStudents" type="number" min="1" value="60" />
+          </label>
+        </div>
+        <div class="actions">
+          <button id="addEnrollmentBtn">Registrar matrícula</button>
+          <button id="generateGroupsBtn" class="secondary">Generar grupos automáticamente</button>
+        </div>
+        <ul id="enrollmentList" class="list"></ul>
+        <h3>Grupos generados</h3>
+        <ul id="groupList" class="list"></ul>
+      </section>
+
+      <section>
+        <h2>Carga de clases por CSV</h2>
+        <p class="small muted">Formato: clase,creditos,compartida,anio,categoria,tipo</p>
+        <div class="grid">
+          <label>Archivo CSV
+            <input id="csvFile" type="file" accept=".csv,text/csv" />
+          </label>
+          <label>O pegar CSV manual
+            <textarea id="csvText" placeholder="clase,creditos,compartida,anio,categoria,tipo"></textarea>
+          </label>
+        </div>
+        <div class="actions">
+          <button id="importCsvBtn">Importar clases</button>
+        </div>
+        <ul id="classList" class="list"></ul>
+      </section>
+
+      <section class="full">
+        <h2>Motor de generación de horarios</h2>
+        <div class="actions">
+          <button id="generateBtn">Generar horario</button>
+          <button id="resetBtn" class="danger">Reiniciar sistema</button>
+        </div>
+        <div id="messages" class="status muted">Sin acciones recientes.</div>
+      </section>
+
+      <section class="full">
+        <h2>Asignación manual / Edición</h2>
+        <div class="manual-editor">
+          <label>Registro
+            <select id="manualEntry"></select>
+          </label>
+          <label>Día
+            <select id="manualDay"></select>
+          </label>
+          <label>Bloque inicial
+            <select id="manualBlock"></select>
+          </label>
+          <label>Docente
+            <select id="manualTeacher"></select>
+          </label>
+          <label>Aula
+            <select id="manualRoom"></select>
+          </label>
+        </div>
+        <div class="actions">
+          <button id="manualAssignBtn">Asignar manualmente</button>
+          <button id="manualDeleteBtn" class="ghost">Eliminar registro</button>
+        </div>
+      </section>
+
+      <section class="full">
+        <h2>Visualización del horario</h2>
+        <p class="small muted">Filas: bloques | Columnas: días | Celdas: clase, grupo, docente.</p>
+        <div id="scheduleContainer"></div>
       </section>
     </main>
 
-    <template id="empty-state">
-      <p class="empty">Aún no hay datos registrados.</p>
-    </template>
+    <script>
+      (() => {
+        const STORAGE_KEY = 'uhi-scheduler-v1';
+        const DEFAULT_STATE = {
+          coordinaciones: [], carreras: [], periodos: [], turnos: [],
+          aniosAcademicos: [1,2,3,4,5], clases: [], docentes: [], aulas: [],
+          matriculas: [], gruposGenerados: [], horarioFinal: [], advertencias: []
+        };
 
-    <script src="script.js"></script>
+        const state = loadState();
+
+        const $ = (id) => document.getElementById(id);
+        const refs = {
+          coordName: $('coordName'), coordCode: $('coordCode'), careerName: $('careerName'), careerCode: $('careerCode'),
+          periodName: $('periodName'), academicList: $('academicList'), addAcademicBtn: $('addAcademicBtn'),
+          shiftName: $('shiftName'), shiftDays: $('shiftDays'), shiftStart: $('shiftStart'), shiftEnd: $('shiftEnd'),
+          blockDuration: $('blockDuration'), breakBlocks: $('breakBlocks'), lunchBlocks: $('lunchBlocks'), maxPerDay: $('maxPerDay'),
+          saveShiftBtn: $('saveShiftBtn'), shiftList: $('shiftList'),
+          teacherName: $('teacherName'), teacherAreas: $('teacherAreas'), addTeacherBtn: $('addTeacherBtn'), teacherList: $('teacherList'),
+          roomName: $('roomName'), roomType: $('roomType'), roomCapacity: $('roomCapacity'), addRoomBtn: $('addRoomBtn'), roomList: $('roomList'),
+          enrollCareer: $('enrollCareer'), enrollYear: $('enrollYear'), enrollStudents: $('enrollStudents'),
+          addEnrollmentBtn: $('addEnrollmentBtn'), generateGroupsBtn: $('generateGroupsBtn'), enrollmentList: $('enrollmentList'), groupList: $('groupList'),
+          csvFile: $('csvFile'), csvText: $('csvText'), importCsvBtn: $('importCsvBtn'), classList: $('classList'),
+          generateBtn: $('generateBtn'), resetBtn: $('resetBtn'), messages: $('messages'), scheduleContainer: $('scheduleContainer'),
+          manualEntry: $('manualEntry'), manualDay: $('manualDay'), manualBlock: $('manualBlock'), manualTeacher: $('manualTeacher'), manualRoom: $('manualRoom'),
+          manualAssignBtn: $('manualAssignBtn'), manualDeleteBtn: $('manualDeleteBtn')
+        };
+
+        function loadState() {
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return structuredClone(DEFAULT_STATE);
+            const parsed = JSON.parse(raw);
+            return { ...structuredClone(DEFAULT_STATE), ...parsed };
+          } catch {
+            return structuredClone(DEFAULT_STATE);
+          }
+        }
+        function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+        function uid(prefix) { return `${prefix}-${crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(16).slice(2)}`; }
+        function parseCSV(text) {
+          return text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((line) => line.split(',').map(v => v.trim()));
+        }
+        function notify(text, type='ok') {
+          refs.messages.className = `status ${type}`;
+          refs.messages.textContent = text;
+        }
+        function escapeHtml(value='') {
+          return value.replace(/[&<>'"]/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','\'':'&#39;','"':'&quot;'}[m]));
+        }
+        function creditToBlocks(creditos) {
+          const c = Number(creditos) || 1;
+          return Math.max(1, Math.ceil(c));
+        }
+        function normalizeClassType(tipo='aula') {
+          const t = tipo.toLowerCase();
+          if (t.includes('lab')) return 'laboratorio';
+          if (t.includes('taller')) return 'taller';
+          return 'aula';
+        }
+        function getCurrentShift() {
+          if (state.turnos.length === 0) return null;
+          return state.turnos[0];
+        }
+        function avgRoomCapacity() {
+          if (state.aulas.length === 0) return 40;
+          const total = state.aulas.reduce((sum, r) => sum + Number(r.capacidad || 0), 0);
+          return Math.max(1, Math.round(total / state.aulas.length));
+        }
+        function generateTimeBlocks(start, end, duration) {
+          const [sh, sm] = start.split(':').map(Number);
+          const [eh, em] = end.split(':').map(Number);
+          let cursor = sh * 60 + sm;
+          const endMin = eh * 60 + em;
+          const blocks = [];
+          let i = 1;
+          while (cursor + duration <= endMin + 1) {
+            const sH = String(Math.floor(cursor / 60)).padStart(2, '0');
+            const sM = String(cursor % 60).padStart(2, '0');
+            const e = cursor + duration;
+            const eH = String(Math.floor(e / 60)).padStart(2, '0');
+            const eM = String(e % 60).padStart(2, '0');
+            blocks.push({ index: i, label: `${sH}:${sM}-${eH}:${eM}` });
+            i += 1;
+            cursor = e;
+          }
+          return blocks;
+        }
+
+        function renderAcademic() {
+          refs.academicList.innerHTML = state.carreras.length
+            ? state.carreras.map(c => {
+                const co = state.coordinaciones.find(x => x.id === c.coordinacionId);
+                return `<li class="item"><strong>${escapeHtml(c.nombre)}</strong> <span class="badge mono">${escapeHtml(c.codigo)}</span><br><span class="small muted">Coord: ${escapeHtml(co?.nombre || 'N/A')} | Periodos: ${state.periodos.filter(p => p.carreraId === c.id).map(p => p.nombre).join(', ') || 'N/A'}</span></li>`;
+              }).join('')
+            : '<li class="item muted">Sin configuración académica.</li>';
+
+          refs.enrollCareer.innerHTML = state.carreras.map(c => `<option value="${c.id}">${escapeHtml(c.nombre)} (${escapeHtml(c.codigo)})</option>`).join('');
+        }
+
+        function renderShift() {
+          refs.shiftList.innerHTML = state.turnos.length
+            ? state.turnos.map(t => `<li class="item"><strong>${escapeHtml(t.nombre)}</strong> | ${t.dias.join(', ')} | Bloques: ${t.bloques.length} | Máx/día: ${t.maxClasesDia}<br><span class="small muted">Receso: ${t.receso.join(', ') || 'ninguno'} | Almuerzo: ${t.almuerzo.join(', ') || 'ninguno'}</span></li>`).join('')
+            : '<li class="item muted">Sin turnos configurados.</li>';
+        }
+
+        function renderResources() {
+          refs.teacherList.innerHTML = state.docentes.length
+            ? state.docentes.map(d => `<li class="item"><strong>${escapeHtml(d.nombre)}</strong><br><span class="small muted">Áreas: ${escapeHtml(d.areas.join(', '))}</span></li>`).join('')
+            : '<li class="item muted">Sin docentes.</li>';
+
+          refs.roomList.innerHTML = state.aulas.length
+            ? state.aulas.map(a => `<li class="item"><strong>${escapeHtml(a.nombre)}</strong> <span class="badge">${a.tipo}</span><span class="badge">cap ${a.capacidad}</span></li>`).join('')
+            : '<li class="item muted">Sin aulas.</li>';
+
+          refs.manualTeacher.innerHTML = state.docentes.map(d => `<option value="${d.id}">${escapeHtml(d.nombre)}</option>`).join('');
+          refs.manualRoom.innerHTML = state.aulas.map(a => `<option value="${a.id}">${escapeHtml(a.nombre)} (${a.tipo})</option>`).join('');
+        }
+
+        function renderEnrollments() {
+          refs.enrollmentList.innerHTML = state.matriculas.length
+            ? state.matriculas.map(m => {
+                const c = state.carreras.find(x => x.id === m.carreraId);
+                return `<li class="item">${escapeHtml(c?.nombre || 'Carrera')} - Año ${m.anio}: <strong>${m.totalEstudiantes}</strong> estudiantes</li>`;
+              }).join('')
+            : '<li class="item muted">Sin matrículas.</li>';
+
+          refs.groupList.innerHTML = state.gruposGenerados.length
+            ? state.gruposGenerados.map(g => `<li class="item"><span class="mono">${g.codigoGrupo}</span> | ${escapeHtml(g.carreraCodigo)} año ${g.anio} | capacidad objetivo ${g.tamanoObjetivo}</li>`).join('')
+            : '<li class="item muted">Aún no hay grupos generados.</li>';
+        }
+
+        function renderClasses() {
+          refs.classList.innerHTML = state.clases.length
+            ? state.clases.map(c => `<li class="item"><strong>${escapeHtml(c.nombre)}</strong> <span class="badge">${c.tipoAulaRequerida}</span> <span class="badge">${c.bloquesConsecutivos} bloques</span><br><span class="small muted">Año ${c.anio} | categoría ${escapeHtml(c.categoria)} | compartida: ${c.compartida ? 'sí' : 'no'}</span></li>`).join('')
+            : '<li class="item muted">Sin clases cargadas.</li>';
+        }
+
+        function renderManualOptions() {
+          refs.manualEntry.innerHTML = state.horarioFinal.length
+            ? state.horarioFinal.map(h => `<option value="${h.id}">${escapeHtml(h.carreraCodigo)}-${h.anio}-${escapeHtml(h.grupo)} | ${escapeHtml(h.clase)} | ${h.dia} (${h.bloques.join(',')})</option>`).join('')
+            : '';
+
+          const shift = getCurrentShift();
+          refs.manualDay.innerHTML = shift ? shift.dias.map(d => `<option value="${d}">${d}</option>`).join('') : '';
+          refs.manualBlock.innerHTML = shift ? shift.bloques.map(b => `<option value="${b.index}">${b.index} - ${b.label}</option>`).join('') : '';
+        }
+
+        function renderSchedule() {
+          const shift = getCurrentShift();
+          if (!shift) {
+            refs.scheduleContainer.innerHTML = '<div class="item muted">Configura un turno para visualizar el horario.</div>';
+            return;
+          }
+          const entries = state.horarioFinal;
+          const dayCols = shift.dias;
+          let html = '<table><thead><tr><th>Bloque</th>' + dayCols.map(d => `<th>${d}</th>`).join('') + '</tr></thead><tbody>';
+
+          shift.bloques.forEach((block) => {
+            html += `<tr><td><strong>${block.index}</strong><br><span class="small muted">${block.label}</span></td>`;
+            dayCols.forEach((day) => {
+              const cellEntries = entries.filter(e => e.dia === day && e.bloques.includes(block.index));
+              if (!cellEntries.length) {
+                const isPause = shift.receso.includes(block.index) || shift.almuerzo.includes(block.index);
+                html += `<td>${isPause ? '<span class="small muted">No disponible</span>' : ''}</td>`;
+                return;
+              }
+              html += '<td>' + cellEntries.map(e => `<div class="cell"><strong>${escapeHtml(e.clase)}</strong><br><span class="small">${escapeHtml(e.grupo)} | ${escapeHtml(e.docente)}</span><br><span class="small muted">${escapeHtml(e.aula)} · ${escapeHtml(e.carreraCodigo)}-${e.anio}</span></div>`).join('') + '</td>';
+            });
+            html += '</tr>';
+          });
+
+          html += '</tbody></table>';
+          refs.scheduleContainer.innerHTML = html;
+        }
+
+        function renderAll() {
+          renderAcademic();
+          renderShift();
+          renderResources();
+          renderEnrollments();
+          renderClasses();
+          renderManualOptions();
+          renderSchedule();
+        }
+
+        function generateGroups() {
+          const avg = avgRoomCapacity();
+          const groups = [];
+          state.matriculas.forEach((m) => {
+            const career = state.carreras.find(c => c.id === m.carreraId);
+            if (!career) return;
+            const total = Number(m.totalEstudiantes || 0);
+            const count = Math.max(1, Math.ceil(total / avg));
+            const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            for (let i = 0; i < count; i++) {
+              groups.push({
+                id: uid('grp'),
+                carreraId: career.id,
+                carreraCodigo: career.codigo,
+                anio: m.anio,
+                codigoGrupo: `${career.codigo}-${m.anio}${alphabet[i] || `G${i+1}`}`,
+                tamanoObjetivo: Math.ceil(total / count)
+              });
+            }
+          });
+          state.gruposGenerados = groups;
+          saveState();
+          renderEnrollments();
+          notify(`Grupos generados: ${groups.length} (capacidad promedio aulas: ${avg}).`);
+        }
+
+        function canAssign(candidate, context) {
+          const { day, room, teacher, groupCode, blocksNeeded, shift } = candidate;
+          const { schedule, dayLoad, classType, groupSize } = context;
+
+          if (dayLoad[groupCode]?.[day] >= shift.maxClasesDia) return false;
+
+          for (const start of shift.bloques.map(b => b.index)) {
+            const blocks = Array.from({ length: blocksNeeded }, (_, i) => start + i);
+            const validBlocks = blocks.every((b) => shift.bloques.some(x => x.index === b));
+            if (!validBlocks) continue;
+            const blockedByPause = blocks.some((b) => shift.receso.includes(b) || shift.almuerzo.includes(b));
+            if (blockedByPause) continue;
+
+            const roomTypeOK = room.tipo === classType;
+            const roomCapOK = Number(room.capacidad) >= groupSize;
+            if (!roomTypeOK || !roomCapOK) continue;
+
+            const conflict = schedule.some((entry) => {
+              const overlap = entry.dia === day && entry.bloques.some((b) => blocks.includes(b));
+              if (!overlap) return false;
+              return entry.docenteId === teacher.id || entry.aulaId === room.id || entry.grupo === groupCode;
+            });
+            if (conflict) continue;
+
+            return blocks;
+          }
+          return null;
+        }
+
+        function pickTeacherForClass(clase) {
+          const area = clase.categoria.toLowerCase();
+          return state.docentes
+            .filter(d => d.areas.some(a => area.includes(a.toLowerCase()) || a.toLowerCase().includes(area)))
+            .concat(state.docentes)
+            .find(Boolean);
+        }
+
+        function runScheduler() {
+          const shift = getCurrentShift();
+          if (!shift) return notify('Debes configurar al menos un turno.', 'error');
+          if (!state.gruposGenerados.length) return notify('Debes generar grupos antes de crear el horario.', 'error');
+          if (!state.clases.length) return notify('No hay clases importadas.', 'error');
+          if (!state.docentes.length || !state.aulas.length) return notify('Faltan docentes o aulas.', 'error');
+
+          const schedule = [];
+          const warnings = [];
+          const dayPriority = [...shift.dias];
+          const dayLoad = {};
+
+          state.gruposGenerados
+            .sort((a,b) => a.anio - b.anio)
+            .forEach((group) => {
+              const classes = state.clases.filter(c => c.anio === group.anio || c.compartida);
+              dayLoad[group.codigoGrupo] = Object.fromEntries(shift.dias.map(d => [d,0]));
+
+              classes.forEach((clase) => {
+                const teacher = pickTeacherForClass(clase);
+                if (!teacher) {
+                  warnings.push(`Sin docente disponible para ${clase.nombre} (${group.codigoGrupo}).`);
+                  return;
+                }
+
+                let assigned = false;
+                for (const day of dayPriority.sort((d1,d2) => dayLoad[group.codigoGrupo][d1] - dayLoad[group.codigoGrupo][d2])) {
+                  const roomCandidates = state.aulas.filter(a => a.tipo === clase.tipoAulaRequerida).sort((a,b) => a.capacidad - b.capacidad);
+                  for (const room of roomCandidates) {
+                    const blocks = canAssign(
+                      { day, room, teacher, groupCode: group.codigoGrupo, blocksNeeded: clase.bloquesConsecutivos, shift },
+                      {
+                        schedule,
+                        dayLoad,
+                        classType: clase.tipoAulaRequerida,
+                        groupSize: group.tamanoObjetivo
+                      }
+                    );
+                    if (blocks) {
+                      schedule.push({
+                        id: uid('sch'), carrera: group.carreraId, carreraCodigo: group.carreraCodigo, anio: group.anio,
+                        grupo: group.codigoGrupo, clase: clase.nombre, claseId: clase.id,
+                        docente: teacher.nombre, docenteId: teacher.id,
+                        aula: room.nombre, aulaId: room.id,
+                        dia: day, bloques: blocks
+                      });
+                      dayLoad[group.codigoGrupo][day] += 1;
+                      assigned = true;
+                      break;
+                    }
+                  }
+                  if (assigned) break;
+                }
+
+                if (!assigned) {
+                  warnings.push(`No se pudo asignar ${clase.nombre} para ${group.codigoGrupo}.`);
+                }
+              });
+            });
+
+          state.horarioFinal = schedule;
+          state.advertencias = warnings;
+          saveState();
+          renderAll();
+          notify(`Horario generado: ${schedule.length} asignaciones. Advertencias: ${warnings.length}.`, warnings.length ? 'warn' : 'ok');
+        }
+
+        refs.addAcademicBtn.addEventListener('click', () => {
+          const coordName = refs.coordName.value.trim();
+          const coordCode = refs.coordCode.value.trim().toUpperCase();
+          const careerName = refs.careerName.value.trim();
+          const careerCode = refs.careerCode.value.trim().toUpperCase();
+          const periodName = refs.periodName.value.trim();
+
+          if (!coordName || !coordCode || !careerName || !careerCode || !periodName) {
+            return notify('Completa coordinación, carrera y periodo.', 'error');
+          }
+
+          const coord = { id: uid('coord'), nombre: coordName, codigo: coordCode };
+          const career = { id: uid('car'), nombre: careerName, codigo: careerCode, coordinacionId: coord.id };
+          const period = { id: uid('per'), nombre: periodName, carreraId: career.id };
+          state.coordinaciones.push(coord);
+          state.carreras.push(career);
+          state.periodos.push(period);
+          saveState();
+          renderAll();
+          notify('Configuración académica agregada.');
+        });
+
+        refs.saveShiftBtn.addEventListener('click', () => {
+          const dias = refs.shiftDays.value.split(',').map(s => s.trim()).filter(Boolean);
+          const dur = Number(refs.blockDuration.value || 45);
+          const bloques = generateTimeBlocks(refs.shiftStart.value, refs.shiftEnd.value, dur);
+          if (!dias.length || !bloques.length) return notify('Configura días y bloques válidos.', 'error');
+
+          const receso = refs.breakBlocks.value.split(',').map(n => Number(n.trim())).filter(Boolean);
+          const almuerzo = refs.lunchBlocks.value.split(',').map(n => Number(n.trim())).filter(Boolean);
+          const shift = {
+            id: uid('shift'), nombre: refs.shiftName.value.trim() || 'Turno', dias,
+            bloques, duracion: dur, receso, almuerzo, maxClasesDia: Number(refs.maxPerDay.value || 4)
+          };
+          state.turnos = [shift];
+          saveState();
+          renderAll();
+          notify('Turno configurado correctamente.');
+        });
+
+        refs.addTeacherBtn.addEventListener('click', () => {
+          const name = refs.teacherName.value.trim();
+          const areas = refs.teacherAreas.value.split(',').map(a => a.trim()).filter(Boolean);
+          if (!name || !areas.length) return notify('Ingresa nombre y áreas del docente.', 'error');
+          state.docentes.push({ id: uid('doc'), nombre: name, areas });
+          saveState();
+          renderAll();
+          refs.teacherName.value = '';
+          refs.teacherAreas.value = '';
+          notify('Docente agregado.');
+        });
+
+        refs.addRoomBtn.addEventListener('click', () => {
+          const name = refs.roomName.value.trim();
+          const tipo = refs.roomType.value;
+          const cap = Number(refs.roomCapacity.value || 0);
+          if (!name || cap < 1) return notify('Ingresa aula y capacidad válida.', 'error');
+          state.aulas.push({ id: uid('room'), nombre: name, tipo, capacidad: cap });
+          saveState();
+          renderAll();
+          refs.roomName.value = '';
+          notify('Aula agregada.');
+        });
+
+        refs.addEnrollmentBtn.addEventListener('click', () => {
+          const carreraId = refs.enrollCareer.value;
+          const anio = Number(refs.enrollYear.value);
+          const totalEstudiantes = Number(refs.enrollStudents.value || 0);
+          if (!carreraId || anio < 1 || anio > 5 || totalEstudiantes < 1) return notify('Matrícula inválida.', 'error');
+
+          const existing = state.matriculas.find(m => m.carreraId === carreraId && m.anio === anio);
+          if (existing) existing.totalEstudiantes = totalEstudiantes;
+          else state.matriculas.push({ id: uid('mat'), carreraId, anio, totalEstudiantes });
+          saveState();
+          renderAll();
+          notify('Matrícula registrada.');
+        });
+
+        refs.generateGroupsBtn.addEventListener('click', generateGroups);
+
+        refs.importCsvBtn.addEventListener('click', async () => {
+          let text = refs.csvText.value.trim();
+          const file = refs.csvFile.files[0];
+          if (!text && file) text = await file.text();
+          if (!text) return notify('Proporciona contenido CSV.', 'error');
+
+          const rows = parseCSV(text);
+          if (!rows.length) return notify('CSV vacío.', 'error');
+
+          const hasHeader = rows[0][0]?.toLowerCase() === 'clase';
+          const contentRows = hasHeader ? rows.slice(1) : rows;
+
+          const parsed = contentRows.map((r) => {
+            const [clase, creditos, compartida, anio, categoria, tipo] = r;
+            return {
+              id: uid('class'),
+              nombre: clase || 'Clase sin nombre',
+              creditos: Number(creditos || 1),
+              compartida: String(compartida || '').toLowerCase() === 'true' || String(compartida || '').toLowerCase() === 'si',
+              anio: Number(anio || 1),
+              categoria: categoria || 'General',
+              tipoAulaRequerida: normalizeClassType(tipo || 'aula'),
+              bloquesConsecutivos: creditToBlocks(Number(creditos || 1))
+            };
+          }).filter(c => c.anio >= 1 && c.anio <= 5);
+
+          state.clases = parsed;
+          saveState();
+          renderAll();
+          notify(`Clases importadas: ${parsed.length}.`);
+        });
+
+        refs.generateBtn.addEventListener('click', runScheduler);
+
+        refs.manualAssignBtn.addEventListener('click', () => {
+          const id = refs.manualEntry.value;
+          const entry = state.horarioFinal.find(e => e.id === id);
+          if (!entry) return notify('Selecciona un registro para editar.', 'error');
+
+          const day = refs.manualDay.value;
+          const blockStart = Number(refs.manualBlock.value);
+          const teacherId = refs.manualTeacher.value;
+          const roomId = refs.manualRoom.value;
+          const teacher = state.docentes.find(d => d.id === teacherId);
+          const room = state.aulas.find(r => r.id === roomId);
+          const cls = state.clases.find(c => c.id === entry.claseId);
+          const blocks = Array.from({ length: cls?.bloquesConsecutivos || entry.bloques.length }, (_, i) => blockStart + i);
+          const shift = getCurrentShift();
+
+          if (!teacher || !room || !shift) return notify('Datos manuales incompletos.', 'error');
+
+          const conflict = state.horarioFinal.some((h) => {
+            if (h.id === entry.id) return false;
+            const overlap = h.dia === day && h.bloques.some((b) => blocks.includes(b));
+            if (!overlap) return false;
+            return h.docenteId === teacherId || h.aulaId === roomId || h.grupo === entry.grupo;
+          });
+          const invalidBlock = blocks.some((b) => !shift.bloques.some(x => x.index === b) || shift.receso.includes(b) || shift.almuerzo.includes(b));
+          const roomMismatch = cls && (cls.tipoAulaRequerida !== room.tipo);
+
+          if (conflict || invalidBlock || roomMismatch) return notify('Asignación manual inválida por conflicto/restricción.', 'error');
+
+          entry.dia = day;
+          entry.bloques = blocks;
+          entry.docente = teacher.nombre;
+          entry.docenteId = teacher.id;
+          entry.aula = room.nombre;
+          entry.aulaId = room.id;
+          saveState();
+          renderAll();
+          notify('Asignación manual aplicada.');
+        });
+
+        refs.manualDeleteBtn.addEventListener('click', () => {
+          const id = refs.manualEntry.value;
+          if (!id) return notify('Selecciona un registro.', 'error');
+          state.horarioFinal = state.horarioFinal.filter(h => h.id !== id);
+          saveState();
+          renderAll();
+          notify('Registro eliminado del horario.', 'warn');
+        });
+
+        refs.resetBtn.addEventListener('click', () => {
+          localStorage.removeItem(STORAGE_KEY);
+          Object.keys(state).forEach(k => delete state[k]);
+          Object.assign(state, structuredClone(DEFAULT_STATE));
+          saveState();
+          renderAll();
+          notify('Sistema reiniciado.', 'warn');
+        });
+
+        renderAll();
+      })();
+    </script>
   </body>
 </html>
