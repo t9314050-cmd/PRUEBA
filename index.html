@@ -565,12 +565,17 @@
           return null;
         }
 
-        function pickTeacherForClass(clase) {
-          const area = clase.categoria.toLowerCase();
-          return state.docentes
-            .filter(d => d.areas.some(a => area.includes(a.toLowerCase()) || a.toLowerCase().includes(area)))
-            .concat(state.docentes)
-            .find(Boolean);
+        function pickTeacherCandidates(clase) {
+          const area = (clase.categoria || '').toLowerCase();
+          const preferred = state.docentes.filter((d) =>
+            d.areas.some((a) => {
+              const norm = a.toLowerCase();
+              return area.includes(norm) || norm.includes(area);
+            })
+          );
+          const preferredIds = new Set(preferred.map((d) => d.id));
+          const fallback = state.docentes.filter((d) => !preferredIds.has(d.id));
+          return [...preferred, ...fallback];
         }
 
         function runScheduler() {
@@ -592,37 +597,43 @@
               dayLoad[group.codigoGrupo] = Object.fromEntries(shift.dias.map(d => [d,0]));
 
               classes.forEach((clase) => {
-                const teacher = pickTeacherForClass(clase);
-                if (!teacher) {
+                const teacherCandidates = pickTeacherCandidates(clase);
+                if (!teacherCandidates.length) {
                   warnings.push(`Sin docente disponible para ${clase.nombre} (${group.codigoGrupo}).`);
                   return;
                 }
 
                 let assigned = false;
                 for (const day of dayPriority.sort((d1,d2) => dayLoad[group.codigoGrupo][d1] - dayLoad[group.codigoGrupo][d2])) {
-                  const roomCandidates = state.aulas.filter(a => a.tipo === clase.tipoAulaRequerida).sort((a,b) => a.capacidad - b.capacidad);
-                  for (const room of roomCandidates) {
-                    const blocks = canAssign(
-                      { day, room, teacher, groupCode: group.codigoGrupo, blocksNeeded: clase.bloquesConsecutivos, shift },
-                      {
-                        schedule,
-                        dayLoad,
-                        classType: clase.tipoAulaRequerida,
-                        groupSize: group.tamanoObjetivo
+                  const roomCandidates = state.aulas
+                    .filter(a => a.tipo === clase.tipoAulaRequerida)
+                    .sort((a,b) => a.capacidad - b.capacidad);
+
+                  for (const teacher of teacherCandidates) {
+                    for (const room of roomCandidates) {
+                      const blocks = canAssign(
+                        { day, room, teacher, groupCode: group.codigoGrupo, blocksNeeded: clase.bloquesConsecutivos, shift },
+                        {
+                          schedule,
+                          dayLoad,
+                          classType: clase.tipoAulaRequerida,
+                          groupSize: group.tamanoObjetivo
+                        }
+                      );
+                      if (blocks) {
+                        schedule.push({
+                          id: uid('sch'), carrera: group.carreraId, carreraCodigo: group.carreraCodigo, anio: group.anio,
+                          grupo: group.codigoGrupo, clase: clase.nombre, claseId: clase.id,
+                          docente: teacher.nombre, docenteId: teacher.id,
+                          aula: room.nombre, aulaId: room.id,
+                          dia: day, bloques: blocks
+                        });
+                        dayLoad[group.codigoGrupo][day] += 1;
+                        assigned = true;
+                        break;
                       }
-                    );
-                    if (blocks) {
-                      schedule.push({
-                        id: uid('sch'), carrera: group.carreraId, carreraCodigo: group.carreraCodigo, anio: group.anio,
-                        grupo: group.codigoGrupo, clase: clase.nombre, claseId: clase.id,
-                        docente: teacher.nombre, docenteId: teacher.id,
-                        aula: room.nombre, aulaId: room.id,
-                        dia: day, bloques: blocks
-                      });
-                      dayLoad[group.codigoGrupo][day] += 1;
-                      assigned = true;
-                      break;
                     }
+                    if (assigned) break;
                   }
                   if (assigned) break;
                 }
@@ -684,6 +695,8 @@
           const name = refs.teacherName.value.trim();
           const areas = refs.teacherAreas.value.split(',').map(a => a.trim()).filter(Boolean);
           if (!name || !areas.length) return notify('Ingresa nombre y áreas del docente.', 'error');
+          const alreadyExists = state.docentes.some((d) => d.nombre.toLowerCase() === name.toLowerCase());
+          if (alreadyExists) return notify('El docente ya existe.', 'error');
           state.docentes.push({ id: uid('doc'), nombre: name, areas });
           saveState();
           renderAll();
@@ -697,6 +710,8 @@
           const tipo = refs.roomType.value;
           const cap = Number(refs.roomCapacity.value || 0);
           if (!name || cap < 1) return notify('Ingresa aula y capacidad válida.', 'error');
+          const alreadyExists = state.aulas.some((a) => a.nombre.toLowerCase() === name.toLowerCase());
+          if (alreadyExists) return notify('El aula ya existe.', 'error');
           state.aulas.push({ id: uid('room'), nombre: name, tipo, capacidad: cap });
           saveState();
           renderAll();
@@ -779,8 +794,11 @@
           });
           const invalidBlock = blocks.some((b) => !shift.bloques.some(x => x.index === b) || shift.receso.includes(b) || shift.almuerzo.includes(b));
           const roomMismatch = cls && (cls.tipoAulaRequerida !== room.tipo);
+          const capacityMismatch = state.gruposGenerados.some((g) => g.codigoGrupo === entry.grupo && Number(room.capacidad) < g.tamanoObjetivo);
 
-          if (conflict || invalidBlock || roomMismatch) return notify('Asignación manual inválida por conflicto/restricción.', 'error');
+          if (conflict || invalidBlock || roomMismatch || capacityMismatch) {
+            return notify('Asignación manual inválida por conflicto/restricción.', 'error');
+          }
 
           entry.dia = day;
           entry.bloques = blocks;
